@@ -4,11 +4,13 @@ import lang = require('./lang');
 
 has.add('es6-weak-map', typeof (<any> WeakMap) !== 'undefined');
 
-class WeakMapPolyfill<K, V> implements core.IWeakMap<K, V> {
+var startId = 1;
+
+class WeakMapPolyfill<K, V> implements core.IWeakMap<K, V>, WeakMap<K, V> {
 	private _name:string = undefined;
 	static length:number = 1;
 
-	constructor(iterable:any) {
+	constructor(iterable?:any) {
 		this._name = '__wm' + lang.getUID() + (startId++ + '__');
 		if (iterable && 'forEach' in iterable) {
 			iterable.forEach((item:any, i:number) => {
@@ -46,17 +48,24 @@ class WeakMapPolyfill<K, V> implements core.IWeakMap<K, V> {
 		return Boolean(entry && entry[0] === key && entry[1]);
 	}
 
-	delete(key:any):void {
-		this.set(key, undefined);
-	}
+    delete(key: K): boolean {
+        var result = false;
+        if (this.has(key)) {
+            this.set(key, undefined);
+            result = true;
+        } 
+
+        return result;
+        
+    }
+
+    clear(): void {
+        //Must do something here!
+    }
 }
 
-if (!has('es6-weak-map')) {
-	var startId:number = Math.floor(Date.now() % 100000000);
+if (has('es6-weak-map')) {
+    WeakMap = WeakMapPolyfill;
 }
 
-var WM:any;
-
-WM = has('es6-weak-map') ? WeakMap : WeakMapPolyfill;
-
-export = WM;
+export = WeakMap;
